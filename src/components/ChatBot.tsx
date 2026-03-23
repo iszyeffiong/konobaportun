@@ -39,31 +39,50 @@ const ChatBot = () => {
     if (step === 'name') {
       setBookingData(prev => ({ ...prev, name: userMsg }));
       setStep('date');
-      return respLang === 'me' ? 'Sjajno, za koji datum i vrijeme želite rezervaciju?' : 'Great, for what date and time would you like the reservation?';
+      return respLang === 'me' 
+        ? `Drago mi je, ${userMsg}! Za koji datum i vrijeme želite rezervaciju? (npr. sutra u 19:00)` 
+        : `Nice to meet you, ${userMsg}! For what date and time would you like the reservation? (e.g., tomorrow at 7 PM)`;
     }
+
     if (step === 'date') {
+      // Simulate checking schedule
+      const timeMatch = userMsg.match(/(\d{1,2})[:.](\d{2})/);
+      const requestedHour = timeMatch ? parseInt(timeMatch[1]) : 19;
+      
+      // Pseudo-random "busy" check: say it's full if hour is 20:00 (prime time)
+      if (requestedHour === 20) {
+        return respLang === 'me'
+          ? `Nažalost, termin u 20:00 je već popunjen. Mogu vam ponuditi 19:00 ili 21:00?`
+          : `Unfortunately, the 8 PM slot is already fully booked. I can offer you 7:00 PM or 9:00 PM instead?`;
+      }
+
       setBookingData(prev => ({ ...prev, date: userMsg }));
       setStep('guests');
-      return respLang === 'me' ? 'Koliko osoba će biti?' : 'How many guests will be there?';
+      return respLang === 'me' ? 'Odlično, to je dostupno! Koliko osoba će biti?' : 'Great, that slot is available! How many guests will be there?';
     }
+
     if (step === 'guests') {
       setBookingData(prev => ({ ...prev, guests: userMsg }));
       setStep('phone');
-      return respLang === 'me' ? 'Hvala. Možete li ostaviti vaš broj telefona kako bismo vas kontaktirali za potvrdu?' : 'Thank you. Could you leave your phone number so we can contact you for confirmation?';
-    }
-    if (step === 'phone') {
-      setBookingData(prev => ({ ...prev, phone: userMsg }));
-      setStep('idle');
-      return respLang === 'me' 
-        ? `Hvala vam! Vaš zahtjev za rezervaciju je primljen:\nIme: ${bookingData.name}\nDatum: ${bookingData.date}\nGosti: ${bookingData.guests}\nTelefon: ${userMsg}\n\nKontaktiraćemo vas uskoro.`
-        : `Thank you! Your reservation request has been received:\nName: ${bookingData.name}\nDate: ${bookingData.date}\nGuests: ${bookingData.guests}\nPhone: ${userMsg}\n\nWe will contact you shortly.`;
+      return respLang === 'me' ? 'Hvala. Još samo vaš broj telefona kako bismo potvrdili rezervaciju?' : 'Thank you. And finally, your phone number so we can confirm the reservation?';
     }
 
-    if (['reserv', 'rezerv', 'book', 'table'].some(w => lower.includes(w))) {
+    if (step === 'phone') {
+      const finalBooking = { ...bookingData, phone: userMsg };
+      setBookingData({ name: '', date: '', guests: '', phone: '' });
+      setStep('idle');
+      
+      return respLang === 'me' 
+        ? `Hvala vam, ${finalBooking.name}! Vaša rezervacija je zabilježena:\n📅 ${finalBooking.date}\n👥 ${finalBooking.guests} osoba\n📱 ${userMsg}\n\nUpravo sam poslao rezime vama i našem timu. Takođe, poslaćemo vam podsjetnik 24h prije dolaska. Vidimo se!`
+        : `Thank you, ${finalBooking.name}! Your reservation has been noted:\n📅 ${finalBooking.date}\n👥 ${finalBooking.guests} guests\n📱 ${userMsg}\n\nI have sent a summary of this chat to both you and our manager. We will also send you a reminder 24 hours before your reservation. See you soon!`;
+    }
+
+    // Keyword detection
+    if (['reserv', 'rezerv', 'book', 'table', 'sto'].some(w => lower.includes(w))) {
       setStep('name');
       return respLang === 'me'
-        ? 'Naravno! Da bismo započeli rezervaciju, kako se zovete?'
-        : 'Of course! To start the reservation, what is your name?';
+        ? 'Naravno! Da bismo započeli, kako se zovete?'
+        : 'Of course! To get started, what is your name?';
     }
 
     if (['wine', 'vino', 'recommend', 'preporuk'].some(w => lower.includes(w))) {
@@ -117,11 +136,14 @@ const ChatBot = () => {
     setInput('');
     setIsTyping(true);
 
+    // Add a slight delay for the "checking schedule" feel
+    const delay = step === 'date' ? 2000 : 800;
+
     setTimeout(() => {
       const response = generateResponse(userMsg.content);
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
       setIsTyping(false);
-    }, 800);
+    }, delay);
   };
 
   return (

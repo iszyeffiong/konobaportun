@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarIcon, Clock, Users, User, Phone, Send, Check } from 'lucide-react';
+import { CalendarIcon, Clock, Users, User, Phone, Send, Check, Mail } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { format, startOfDay } from 'date-fns';
 
 const txt = {
   heading: { en: 'Make a Reservation', me: 'Rezervišite Sto' },
   name: { en: 'Your Name', me: 'Vaše Ime' },
   phone: { en: 'Phone Number', me: 'Broj Telefona' },
+  email: { en: 'Email Address', me: 'Email Adresa' },
   date: { en: 'Date', me: 'Datum' },
+  pickDate: { en: 'Pick a date', me: 'Izaberite datum' },
   time: { en: 'Time', me: 'Vrijeme' },
   guests: { en: 'Guests', me: 'Gosti' },
   note: { en: 'Special Requests (optional)', me: 'Posebni Zahtjevi (opciono)' },
@@ -30,7 +37,8 @@ const Reservation = () => {
   const [form, setForm] = useState({
     name: '',
     phone: '',
-    date: '',
+    email: '',
+    date: undefined as Date | undefined,
     time: '',
     guests: 2,
     note: '',
@@ -39,11 +47,11 @@ const Reservation = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.date || !form.time) return;
+    if (!form.name || !form.phone || !form.email || !form.date || !form.time) return;
     setSubmitted(true);
     setTimeout(() => {
       setSubmitted(false);
-      setForm({ name: '', phone: '', date: '', time: '', guests: 2, note: '' });
+      setForm({ name: '', phone: '', email: '', date: undefined, time: '', guests: 2, note: '' });
     }, 4000);
   };
 
@@ -82,8 +90,8 @@ const Reservation = () => {
             onSubmit={handleSubmit}
             className="glass rounded-xl p-6 md:p-8 space-y-5"
           >
-            {/* Name & Phone */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Name & Phone & Email */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="flex items-center gap-2 font-body text-sm text-muted-foreground mb-2">
                   <User size={14} /> {t(txt.name)}
@@ -110,6 +118,19 @@ const Reservation = () => {
                   className="w-full bg-background border border-border rounded-lg px-4 py-2.5 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
+              <div className="sm:col-span-2 lg:col-span-1">
+                <label className="flex items-center gap-2 font-body text-sm text-muted-foreground mb-2">
+                  <Mail size={14} /> {t(txt.email)}
+                </label>
+                <input
+                  type="email"
+                  required
+                  maxLength={100}
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
             </div>
 
             {/* Date & Time */}
@@ -118,14 +139,29 @@ const Reservation = () => {
                 <label className="flex items-center gap-2 font-body text-sm text-muted-foreground mb-2">
                   <CalendarIcon size={14} /> {t(txt.date)}
                 </label>
-                <input
-                  type="date"
-                  required
-                  min={today}
-                  value={form.date}
-                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-body font-normal bg-background border-border h-[42px] hover:bg-background hover:border-primary transition-colors",
+                        !form.date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.date ? format(form.date, "PPP") : <span>{t(txt.pickDate)}</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-50 bg-background border-border glass" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={form.date}
+                      onSelect={(date) => setForm(f => ({ ...f, date }))}
+                      disabled={(date) => date < startOfDay(new Date())}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <label className="flex items-center gap-2 font-body text-sm text-muted-foreground mb-2">
@@ -135,7 +171,7 @@ const Reservation = () => {
                   required
                   value={form.time}
                   onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
-                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
+                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 font-body text-sm text-foreground focus:outline-none focus:border-primary transition-colors h-[42px]"
                 >
                   <option value="" disabled>--:--</option>
                   {timeSlots.map(slot => (

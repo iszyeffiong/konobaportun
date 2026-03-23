@@ -6,7 +6,7 @@ import { useCart } from '@/contexts/CartContext';
 import { translations } from '@/data/translations';
 import CartDrawer from '@/components/CartDrawer';
 
-const navItems = ['home', 'about', 'gallery', 'menu', 'reservation', 'contact'] as const;
+const navItems = ['home', 'about', 'menu', 'gallery', 'reservation', 'contact'] as const;
 
 const Navbar = () => {
   const { lang, setLang, t } = useLanguage();
