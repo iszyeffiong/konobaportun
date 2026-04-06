@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import SaleBanner from "./components/SaleBanner.tsx";
 
 const queryClient = new QueryClient();
 
@@ -13,6 +14,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <SaleBanner />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />

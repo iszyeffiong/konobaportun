@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { CartProvider } from '@/contexts/CartContext';
 import Navbar from '@/components/Navbar';
@@ -11,6 +12,13 @@ import Footer from '@/components/Footer';
 import ChatBot from '@/components/ChatBot';
 
 const Index = () => {
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <LanguageProvider>
       <CartProvider>
