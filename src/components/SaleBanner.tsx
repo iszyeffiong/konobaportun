@@ -24,19 +24,22 @@ const SaleBanner: React.FC<SaleBannerProps> = ({
   const CYCLE_SECONDS = cycleHours * 3600;
 
   useEffect(() => {
-    // 1. Initialize logic
+    // 1. Synchronized logic based on UTC (Constant across all timezones)
     const setupTimer = () => {
-      let startTime = localStorage.getItem('fomo_banner_start_time');
+      // Use a fixed reference point (April 6, 2026, 12:00 PM UTC) as the "Global Sale Launch"
+      // Everyone in the world will have their cycles calculated from this same moment.
+      const REFERENCE_DATE = new Date('2026-04-06T12:00:00Z').getTime();
+      const currentUTC = Date.now();
+      
+      const totalElapsedSeconds = Math.floor((currentUTC - REFERENCE_DATE) / 1000);
+      
+      // Handle the case if users visit before the official start (just in case)
+      const effectiveElapsed = Math.max(0, totalElapsedSeconds);
+      
+      const periodsElapsed = Math.floor(effectiveElapsed / CYCLE_SECONDS);
+      const remainingSeconds = CYCLE_SECONDS - (effectiveElapsed % CYCLE_SECONDS);
 
-      if (!startTime) {
-        startTime = Date.now().toString();
-        localStorage.setItem('fomo_banner_start_time', startTime);
-      }
-
-      const totalElapsedSeconds = Math.floor((Date.now() - parseInt(startTime)) / 1000);
-      const periodsElapsed = Math.floor(totalElapsedSeconds / CYCLE_SECONDS);
-      const remainingSeconds = CYCLE_SECONDS - (totalElapsedSeconds % CYCLE_SECONDS);
-
+      // Percentage is calculated based on how many 4-hour periods have passed since reference date
       const newDiscount = Math.max(3, baseDiscount - (periodsElapsed * reductionRate));
 
       setCurrentDiscount(newDiscount);
@@ -45,11 +48,11 @@ const SaleBanner: React.FC<SaleBannerProps> = ({
 
     setupTimer();
 
-    // 2. Interval to update timer
+    // 2. Continuous update every second
     const interval = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          setupTimer(); // Recalculate if cycle ends
+          setupTimer(); // Recalculate everything when cycle ends to ensure sync
           return CYCLE_SECONDS;
         }
         return prev - 1;
