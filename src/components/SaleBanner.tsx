@@ -1,147 +1,126 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, X, Mail, Instagram, ArrowRight, Zap } from 'lucide-react';
+import { ChevronDown, ChevronUp, Mail, Instagram, Zap, Sparkles, BadgePercent } from 'lucide-react';
 
 interface SaleBannerProps {
-  baseDiscount?: number; // Starting discount (default 80%)
-  reductionRate?: number; // Discount reduction per cycle (default 3%)
-  cycleHours?: number; // Cycle duration (default 4 hours)
   email?: string;
   instagramUrl?: string;
 }
 
 const SaleBanner: React.FC<SaleBannerProps> = ({
-  baseDiscount = 80,
-  reductionRate = 3,
-  cycleHours = 4,
   email = "buildwithwackky@gmail.com",
   instagramUrl = "https://www.instagram.com/youkehhenry?igsh=MTdvcTF1ZXdwdzNvdA%3D%3D&utm_source=qr"
 }) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [currentDiscount, setCurrentDiscount] = useState<number>(baseDiscount);
-
-  const CYCLE_SECONDS = cycleHours * 3600;
-
-  useEffect(() => {
-    // 1. Synchronized logic based on UTC (Constant across all timezones)
-    const setupTimer = () => {
-      // Use a fixed reference point (April 6, 2026, 12:00 PM UTC) as the "Global Sale Launch"
-      // Everyone in the world will have their cycles calculated from this same moment.
-      const REFERENCE_DATE = new Date('2026-04-06T12:00:00Z').getTime();
-      const currentUTC = Date.now();
-      
-      const totalElapsedSeconds = Math.floor((currentUTC - REFERENCE_DATE) / 1000);
-      
-      // Handle the case if users visit before the official start (just in case)
-      const effectiveElapsed = Math.max(0, totalElapsedSeconds);
-      
-      const periodsElapsed = Math.floor(effectiveElapsed / CYCLE_SECONDS);
-      const remainingSeconds = CYCLE_SECONDS - (effectiveElapsed % CYCLE_SECONDS);
-
-      // Percentage is calculated based on how many 4-hour periods have passed since reference date
-      const newDiscount = Math.max(3, baseDiscount - (periodsElapsed * reductionRate));
-
-      setCurrentDiscount(newDiscount);
-      setTimeLeft(remainingSeconds);
-    };
-
-    setupTimer();
-
-    // 2. Continuous update every second
-    const interval = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          setupTimer(); // Recalculate everything when cycle ends to ensure sync
-          return CYCLE_SECONDS;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [baseDiscount, reductionRate, CYCLE_SECONDS]);
-
-  // Format seconds to HH:MM:SS
-  const formatTime = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-  if (!isVisible) return null;
+  const [isMinimized, setIsMinimized] = useState(false);
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 100, opacity: 0 }}
-        className="fixed bottom-0 left-0 right-0 z-[100] w-full overflow-hidden bg-background/90 backdrop-blur-2xl border-t border-primary/20 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)]"
-      >
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent pointer-events-none" />
+    <div className="fixed bottom-6 left-0 right-0 z-[100] px-4 pointer-events-none">
+      <AnimatePresence mode="wait">
+        {!isMinimized ? (
+          <motion.div
+            key="expanded"
+            initial={{ y: 100, opacity: 0, scale: 0.9 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 100, opacity: 0, scale: 0.9 }}
+            className="container mx-auto max-w-4xl pointer-events-auto"
+          >
+            <div className="relative overflow-hidden rounded-3xl bg-background/40 backdrop-blur-3xl border border-primary/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] group">
+              {/* Premium Background Effects */}
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 opacity-50" />
+              <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/20 rounded-full blur-[80px] animate-pulse" />
+              <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-primary/30 rounded-full blur-[80px] animate-pulse" />
+              
+              <div className="relative px-6 py-8 md:px-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                {/* Left: Branding & Offer */}
+                <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full scale-150 animate-pulse" />
+                    <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-primary/60 flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform duration-500">
+                      <BadgePercent className="w-8 h-8 text-white stroke-[2.5px]" />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                      <Sparkles className="w-3 h-3 text-primary fill-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80">Premium Collection</span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-black tracking-tighter mb-1 bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent italic">
+                      LIMITED OFFER
+                    </h3>
+                    <div className="flex items-center justify-center md:justify-start gap-3">
+                      <span className="text-sm font-medium text-muted-foreground/60 line-through">5890Euro</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl md:text-4xl font-black text-primary tracking-tighter drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">
+                          899Euro
+                        </span>
+                        <span className="text-[10px] font-bold text-primary italic uppercase tracking-widest">Only</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-        <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Discount Segment */}
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-primary/20 blur-md rounded-full animate-pulse" />
-              <Zap className="w-5 h-5 text-primary relative fill-primary" />
-            </div>
-            <p className="text-sm font-bold tracking-tight">
-              FLASH OFFER: <span className="text-primary text-lg ml-1">{currentDiscount}% OFF</span>
-            </p>
-            <div className="h-4 w-[1px] bg-border mx-2 hidden md:block" />
-            <p className="hidden lg:block text-xs text-muted-foreground">
-              Discount drops {reductionRate}% every {cycleHours} hours
-            </p>
-          </div>
+                {/* Right: Actions */}
+                <div className="flex items-center gap-4 flex-wrap justify-center">
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={`mailto:${email}`}
+                      className="group/btn relative px-8 py-4 rounded-2xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-[0.2em] overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_10px_20px_rgba(var(--primary),0.3)]"
+                    >
+                      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+                      <div className="relative flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        <span>Secure Spot</span>
+                      </div>
+                    </a>
+                    
+                    <a
+                      href={instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-muted-foreground hover:text-primary hover:scale-110"
+                    >
+                      <Instagram className="w-5 h-5" />
+                    </a>
+                  </div>
 
-          {/* Timer Segment */}
-          <div className="flex items-center gap-4 bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 backdrop-blur-sm">
-            <div className="flex items-center gap-2">
-              <Timer className="w-4 h-4 text-primary animate-spin-slow" />
-              <span className="text-sm font-mono font-black text-primary tabular-nums">
-                {formatTime(timeLeft)}
-              </span>
+                  <button
+                    onClick={() => setIsMinimized(true)}
+                    className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-muted-foreground hover:text-foreground group/min shadow-inner"
+                    title="Minimize"
+                  >
+                    <ChevronDown className="w-5 h-5 group-hover/min:translate-y-0.5 transition-transform" />
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="text-[10px] uppercase font-bold text-muted-foreground leading-none">
-              Resets & <br /> Drops Soon
-            </div>
-          </div>
-
-          {/* Action Segment */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <a
-                href={`mailto:${email}`}
-                className="p-1.5 rounded-full hover:bg-primary/10 transition-colors text-muted-foreground hover:text-primary"
-                title="Email Support"
-              >
-                <Mail className="w-4 h-4" />
-              </a>
-              <a
-                href={instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 rounded-full hover:bg-primary/10 transition-colors text-muted-foreground hover:text-primary"
-                title="Instagram Contact"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-            </div>
-
+          </motion.div>
+        ) : (
+          <motion.div
+            key="minimized"
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 100, opacity: 0 }}
+            className="fixed bottom-8 right-8 pointer-events-auto"
+          >
             <button
-              onClick={() => setIsVisible(false)}
-              className="p-1.5 rounded-full hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive group"
+              onClick={() => setIsMinimized(false)}
+              className="group relative flex items-center gap-3 px-6 py-4 rounded-2xl bg-primary shadow-[0_10px_30px_rgba(var(--primary),0.4)] hover:scale-105 transition-all active:scale-95 overflow-hidden"
             >
-              <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:animate-shimmer" />
+              <div className="relative w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                <Zap className="w-4 h-4 text-white fill-white" />
+              </div>
+              <div className="text-left leading-tight">
+                <div className="text-[10px] font-black uppercase tracking-widest text-white/70">Hot Deal</div>
+                <div className="text-sm font-bold text-white">899Euro</div>
+              </div>
+              <ChevronUp className="w-4 h-4 text-white group-hover:-translate-y-0.5 transition-transform" />
             </button>
-          </div>
-        </div>
-      </motion.div>
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
